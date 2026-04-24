@@ -5,9 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FX / CFD Image Dashboard</title>
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -22,9 +20,7 @@
       padding: 16px;
     }
 
-    .header {
-      margin-bottom: 16px;
-    }
+    .header { margin-bottom: 16px; }
 
     .header h1 {
       margin: 0 0 8px;
@@ -53,7 +49,7 @@
       border: 1px solid #333;
       border-radius: 10px;
       overflow: hidden;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.35);
     }
 
     .card-header {
@@ -72,11 +68,10 @@
       margin-top: 4px;
       font-size: 12px;
       color: #bdbdbd;
+      word-break: break-all;
     }
 
-    .card-body {
-      padding: 8px;
-    }
+    .card-body { padding: 8px; }
 
     .card img {
       display: block;
@@ -117,15 +112,14 @@
   </style>
 </head>
 <body>
-
-<script>
-const password = "1111";
-const input = prompt("pw");
-
-if (input !== password) {
-  document.body.innerHTML = "denied";
-}
-</script>
+  <script>
+    const password = "1111";
+    const input = prompt("pw");
+    if (input !== password) {
+      document.write("denied");
+      throw new Error("denied");
+    }
+  </script>
 
   <div class="page">
     <div class="header">
@@ -140,9 +134,7 @@ if (input !== password) {
           <h2>1) FX Main</h2>
           <div class="meta" id="meta-fx-main">-</div>
         </div>
-        <div class="card-body">
-          <img id="img-fx-main" alt="FX Main" loading="lazy" />
-        </div>
+        <div class="card-body"><img id="img-fx-main" alt="FX Main" loading="lazy" /></div>
       </section>
 
       <section class="card fx-aud">
@@ -150,9 +142,7 @@ if (input !== password) {
           <h2>2) FX AUD</h2>
           <div class="meta" id="meta-fx-aud">-</div>
         </div>
-        <div class="card-body">
-          <img id="img-fx-aud" alt="FX AUD" loading="lazy" />
-        </div>
+        <div class="card-body"><img id="img-fx-aud" alt="FX AUD" loading="lazy" /></div>
       </section>
 
       <section class="card fx-ca">
@@ -160,9 +150,7 @@ if (input !== password) {
           <h2>3) FX Currency Analyzer</h2>
           <div class="meta" id="meta-fx-ca">-</div>
         </div>
-        <div class="card-body">
-          <img id="img-fx-ca" alt="FX Currency Analyzer" loading="lazy" />
-        </div>
+        <div class="card-body"><img id="img-fx-ca" alt="FX Currency Analyzer" loading="lazy" /></div>
       </section>
 
       <section class="card cfd">
@@ -170,9 +158,7 @@ if (input !== password) {
           <h2>4) CFD</h2>
           <div class="meta" id="meta-cfd">-</div>
         </div>
-        <div class="card-body">
-          <img id="img-cfd" alt="CFD" loading="lazy" />
-        </div>
+        <div class="card-body"><img id="img-cfd" alt="CFD" loading="lazy" /></div>
       </section>
 
       <section class="card cfd-a">
@@ -180,21 +166,20 @@ if (input !== password) {
           <h2>5) CFD Analyzer</h2>
           <div class="meta" id="meta-cfda">-</div>
         </div>
-        <div class="card-body">
-          <img id="img-cfda" alt="CFD Analyzer" loading="lazy" />
-        </div>
+        <div class="card-body"><img id="img-cfda" alt="CFD Analyzer" loading="lazy" /></div>
       </section>
     </div>
 
     <div class="note">
       配信ルール：FX は 6, 10, 14, 18, 22時。CFD はその1時間後の 7, 11, 15, 19, 23時。<br />
-      このHTMLは、開いた時点の現在時刻を使って「その時点で既に配信済みの最新画像」を自動表示します。
+      FXは最新の配信済み時刻、CFDは現在時刻より前に配信済みの最新時刻を表示します。
     </div>
   </div>
 
   <script>
     const BASE_URL = "https://charts-archives.fx-funsoku.com/archives";
     const FX_HOURS = [6, 10, 14, 18, 22];
+    const CFD_HOURS = [7, 11, 15, 19, 23];
 
     function pad(n) {
       return String(n).padStart(2, "0");
@@ -204,12 +189,7 @@ if (input !== password) {
       const y = date.getFullYear();
       const m = pad(date.getMonth() + 1);
       const d = pad(date.getDate());
-      return {
-        yyyy: String(y),
-        mm: m,
-        dd: d,
-        ymd: `${y}-${m}-${d}`
-      };
+      return { ymd: `${y}-${m}-${d}` };
     }
 
     function formatDisplay(date) {
@@ -217,31 +197,20 @@ if (input !== password) {
       return `${p.ymd} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
     }
 
-    function getLatestFxDelivery(now) {
-      const todayHoursDesc = [...FX_HOURS].sort((a, b) => b - a);
-      const hour = now.getHours();
+    function getLatestDelivery(now, hours) {
+      const h = now.getHours();
+      const date = new Date(now);
 
-      for (const fxHour of todayHoursDesc) {
-        if (hour >= fxHour) {
-          const fxDate = new Date(now);
-          fxDate.setHours(fxHour, 0, 0, 0);
-
-          const cfdDate = new Date(now);
-          cfdDate.setHours(fxHour + 1, 0, 0, 0);
-
-          return { fxDate, cfdDate };
+      for (let i = hours.length - 1; i >= 0; i--) {
+        if (h >= hours[i]) {
+          date.setHours(hours[i], 0, 0, 0);
+          return date;
         }
       }
 
-      const prev = new Date(now);
-      prev.setDate(prev.getDate() - 1);
-      prev.setHours(22, 0, 0, 0);
-
-      const prevCfd = new Date(now);
-      prevCfd.setDate(prevCfd.getDate() - 1);
-      prevCfd.setHours(23, 0, 0, 0);
-
-      return { fxDate: prev, cfdDate: prevCfd };
+      date.setDate(date.getDate() - 1);
+      date.setHours(hours[hours.length - 1], 0, 0, 0);
+      return date;
     }
 
     function buildImageUrl(dateObj, suffix) {
@@ -254,14 +223,20 @@ if (input !== password) {
       const url = buildImageUrl(dateObj, suffix);
       const img = document.getElementById(imgId);
       const meta = document.getElementById(metaId);
+
       img.src = url;
       img.alt = label;
       meta.textContent = `${formatDateParts(dateObj).ymd} ${pad(dateObj.getHours())}H`;
+
+      img.onerror = function () {
+        meta.textContent += " / 読み込み失敗";
+      };
     }
 
-    (function init() {
+    function init() {
       const now = new Date();
-      const { fxDate, cfdDate } = getLatestFxDelivery(now);
+      const fxDate = getLatestDelivery(now, FX_HOURS);
+      const cfdDate = getLatestDelivery(now, CFD_HOURS);
 
       document.getElementById("nowText").textContent = `現在時刻: ${formatDisplay(now)}`;
       document.getElementById("deliveryText").textContent = `表示中: FX ${formatDateParts(fxDate).ymd} ${pad(fxDate.getHours())}H / CFD ${formatDateParts(cfdDate).ymd} ${pad(cfdDate.getHours())}H`;
@@ -271,7 +246,9 @@ if (input !== password) {
       setImage("img-fx-ca", "meta-fx-ca", "FX Currency Analyzer", fxDate, "CA");
       setImage("img-cfd", "meta-cfd", "CFD", cfdDate, "CFD");
       setImage("img-cfda", "meta-cfda", "CFD Analyzer", cfdDate, "CFDA");
-    })();
+    }
+
+    init();
   </script>
 </body>
 </html>
