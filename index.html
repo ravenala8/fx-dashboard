@@ -126,6 +126,7 @@
       <h1>FX / CFD Image Dashboard</h1>
       <p id="nowText">現在時刻を取得中...</p>
       <p id="deliveryText">配信済み画像を判定中...</p>
+      <p id="reloadText">次回更新時刻を計算中...</p>
     </div>
 
     <div class="grid">
@@ -180,6 +181,10 @@
     const BASE_URL = "https://charts-archives.fx-funsoku.com/archives";
     const FX_HOURS = [6, 10, 14, 18, 22];
     const CFD_HOURS = [7, 11, 15, 19, 23];
+    const ALL_DELIVERY_HOURS = [6, 7, 10, 11, 14, 15, 18, 19, 22, 23];
+
+    // 配信直後は画像生成・反映に少し遅れる可能性があるため、指定分だけ待ってからリロード
+    const RELOAD_BUFFER_MINUTES = 3;
 
     function pad(n) {
       return String(n).padStart(2, "0");
@@ -233,6 +238,34 @@
       };
     }
 
+    function getNextReloadTime(now) {
+      const next = new Date(now);
+      const currentHour = now.getHours();
+
+      for (const deliveryHour of ALL_DELIVERY_HOURS) {
+        if (currentHour < deliveryHour || (currentHour === deliveryHour && now.getMinutes() < RELOAD_BUFFER_MINUTES)) {
+          next.setHours(deliveryHour, RELOAD_BUFFER_MINUTES, 0, 0);
+          return next;
+        }
+      }
+
+      next.setDate(next.getDate() + 1);
+      next.setHours(ALL_DELIVERY_HOURS[0], RELOAD_BUFFER_MINUTES, 0, 0);
+      return next;
+    }
+
+    function scheduleAutoReload() {
+      const now = new Date();
+      const nextReload = getNextReloadTime(now);
+      const msUntilReload = nextReload.getTime() - now.getTime();
+
+      document.getElementById("reloadText").textContent = `次回自動更新: ${formatDisplay(nextReload)}`;
+
+      setTimeout(() => {
+        location.reload();
+      }, msUntilReload);
+    }
+
     function init() {
       const now = new Date();
       const fxDate = getLatestDelivery(now, FX_HOURS);
@@ -246,6 +279,8 @@
       setImage("img-fx-ca", "meta-fx-ca", "FX Currency Analyzer", fxDate, "CA");
       setImage("img-cfd", "meta-cfd", "CFD", cfdDate, "CFD");
       setImage("img-cfda", "meta-cfda", "CFD Analyzer", cfdDate, "CFDA");
+
+      scheduleAutoReload();
     }
 
     init();
